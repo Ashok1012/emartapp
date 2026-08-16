@@ -1,14 +1,14 @@
-FROM node:14 AS web-build
-WORKDIR /usr/src/app
-COPY ./ ./client
-RUN cd client && npm install && npm run build --prod
+FROM node:20-alpine as build
+WORKDIR /app
+COPY . .
+RUN npm install && npm run build
 
-# Use official nginx image as the base image
-FROM nginx:latest
+FROM nginx:alpine
+COPY --from=build /app/dist/client /usr/share/nginx/html
+CMD ["nginx", "-g" ,"daemon off;"]
 
-# Copy the build output to replace the default nginx contents.
-COPY --from=web-build /usr/src/app/client/dist/client/ /usr/share/nginx/html
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 4200
-EXPOSE 4200
+EXPOSE 80
